@@ -13,7 +13,10 @@ module.exports.getUser = (req, res, next) => {
       throw new NotFoundError('Пользователь по указанному _id не найден');
     })
     .then((user) => {
-      res.send(user);
+      res.send({
+        email: user.email,
+        name: user.name,
+      });
     })
     .catch((err) => next(err));
 };
@@ -42,10 +45,10 @@ module.exports.createUser = (req, res, next) => {
 
 module.exports.updateUser = (req, res, next) => {
   const userId = req.user._id;
-  const { name, about } = req.body;
+  const { name, email } = req.body;
   User.findByIdAndUpdate(
     userId,
-    { name, about },
+    { name, email },
     { new: true, runValidators: true },
   )
     .orFail(() => {
@@ -55,7 +58,10 @@ module.exports.updateUser = (req, res, next) => {
       if (!user) {
         throw new BadRequestError('Ошибка валидации');
       }
-      res.send({ data: user });
+      res.send({
+        email: user.email,
+        name: user.name,
+      });
     })
     .catch((err) => next(err));
 };
