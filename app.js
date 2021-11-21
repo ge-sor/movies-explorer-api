@@ -16,11 +16,8 @@ mongoose.connect('mongodb://localhost:27017/filmsdb', {
 });
 const allowedCors = [
   'http://localhost:3000',
-  'http://localhost:3001',
-  'http://gesor.nomoredomains.xyz',
-  'https://gesor.nomoredomains.xyz',
-  'http://api.gesor.nomoredomains.rocks',
-  'https://api.gesor.nomoredomains.rocks',
+  'http://api.gesor-films.nomoredomains.work',
+  'https://api.gesor-films.nomoredomains.work',
 ];
 app.use((req, res, next) => {
   const { origin } = req.headers;
