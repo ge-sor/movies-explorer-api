@@ -2,20 +2,21 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
-const { errors, celebrate, Joi } = require('celebrate');
+const { errors } = require('celebrate');
 const auth = require('./middlewares/auth');
 const NotFoundError = require('./errors/not-found-err');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
-
+const { DB_MOVIES } = process.env;
 const PORT = 3000;
 const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-mongoose.connect('mongodb://localhost:27017/filmsdb', {
+mongoose.connect(DB_MOVIES, {
   useNewUrlParser: true,
 });
 const allowedCors = [
   'http://localhost:3000',
+  'http://localhost:3001',
   'http://api.gesor-films.nomoredomains.work',
   'https://api.gesor-films.nomoredomains.work',
 ];
@@ -37,7 +38,6 @@ app.use((req, res, next) => {
 
   next();
 });
-const { login, createUser } = require('./controllers/users');
 
 app.use(requestLogger);
 app.get('/crash-test', () => {
@@ -46,30 +46,13 @@ app.get('/crash-test', () => {
   }, 0);
 });
 
-app.post('/signup',
-  celebrate({
-    body: Joi.object().keys({
-      password: Joi.string().required().min(6),
-      email: Joi.string().required().email(),
-      name: Joi.string().required().min(2).max(30),
-    }),
-  }),
-  createUser);
-
-app.post('/signin',
-  celebrate({
-    body: Joi.object().keys({
-      email: Joi.string().required().email(),
-      password: Joi.string().required().min(6),
-    }),
-  }),
-  login);
+app.use(require('./routes/auth'));
 
 app.use(auth);
 
-app.use('/users', require('./routes/users'));
+app.use(require('./routes/users'));
 
-app.use('/movies', require('./routes/movies'));
+app.use(require('./routes/movies'));
 
 app.use('*', (req, res, next) => {
   next(new NotFoundError('Страницы не существует'));

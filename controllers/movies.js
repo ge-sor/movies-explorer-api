@@ -11,6 +11,7 @@ module.exports.getMovies = (req, res, next) => {
 
 module.exports.createMovie = (req, res, next) => {
   const {
+    movieId,
     country,
     director,
     duration,
@@ -24,6 +25,7 @@ module.exports.createMovie = (req, res, next) => {
   } = req.body;
 
   Movie.create({
+    movieId,
     country,
     director,
     duration,
@@ -42,24 +44,25 @@ module.exports.createMovie = (req, res, next) => {
       }
       res.send({ data: movie });
     })
-    .catch((err) => next(err));
+    .catch(next);
 };
 
 module.exports.deleteMovie = (req, res, next) => {
-  const { movieId } = req.params;
-  const ownerId = req.user._id;
-  Movie.findById(movieId)
+  Movie.findById(req.params.movieId)
     .orFail(() => {
       throw new NotFoundError('Фильм с указанным _id не найден');
     })
     .then((movie) => {
-      if (ownerId.toString() === movie.owner._id.toString()) {
-        Movie.deleteOne(movie).then(() => {
-          res.send({ data: movie });
-        });
-      } else {
-        throw new ForbiddenError('Недостаточно прав для удаления фильма');
+      if (req.user._id.toString() === movie.owner.toString()) {
+        return movie.remove()
+          .then(() => res.status(200).send({ message: 'Фильм удален' }))
       }
+        throw new ForbiddenError('Недостаточно прав для удаления фильма');
     })
-    .catch((err) => next(err));
+    .catch((err) => {
+      if (err.kind === 'ObjectId') {
+        next(new BadRequestError('Невалидный id'));
+      }
+      next(err)
+    });
 };

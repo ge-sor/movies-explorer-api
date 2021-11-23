@@ -4,6 +4,7 @@ const User = require('../models/user');
 const AuthError = require('../errors/auth-err');
 const NotFoundError = require('../errors/not-found-err');
 const BadRequestError = require('../errors/bad-request-err');
+const ConflictError = require('../errors/conflict-err');
 
 const { JWT_SECRET = 'DEFAULT_JWT_SECRET' } = process.env;
 
@@ -18,7 +19,7 @@ module.exports.getUser = (req, res, next) => {
         name: user.name,
       });
     })
-    .catch((err) => next(err));
+    .catch(next);
 };
 
 module.exports.createUser = (req, res, next) => {
@@ -27,25 +28,34 @@ module.exports.createUser = (req, res, next) => {
   } = req.body;
   User.findOne({ email }).then((find) => {
     if (find) {
-      res
-        .status(409)
-        .send({ message: 'Такой пользователь уже зарегистрирован.' });
+      throw new ConflictError('Email уже используется');
     }
-  });
-  bcrypt.hash(password, 10).then((hash) => {
-    User.create({
+  }).catch(next);
+  bcrypt.hash(password, 10).then((hash) => User.create({
       name, email, password: hash,
     })
-      .then((user) => {
-        res.send({ _id: user._id });
+      .then(() => {
+        res.status(200).send({ message : 'Вы успешно зарегистрировались'})
       })
-      .catch((err) => next(err));
-  });
+      .catch((err) => {
+        if (err.name === 'ValidationError') {
+          throw new BadRequestError('Переданы некорректные данные');
+        }
+        if (err.code === 11000) {
+          throw new ConflictError('Email уже используется');
+        }
+        return next(err)
+      })).catch(next);
 };
 
 module.exports.updateUser = (req, res, next) => {
   const userId = req.user._id;
   const { name, email } = req.body;
+  User.findOne({ email }).then((find) => {
+    if (find) {
+      throw new ConflictError('Такой email уже занят' );
+    }
+  }).catch(next)
   User.findByIdAndUpdate(
     userId,
     { name, email },
@@ -63,7 +73,7 @@ module.exports.updateUser = (req, res, next) => {
         name: user.name,
       });
     })
-    .catch((err) => next(err));
+    .catch(next);
 };
 
 module.exports.login = (req, res, next) => {
@@ -81,7 +91,7 @@ module.exports.login = (req, res, next) => {
           const token = jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: '7d' });
           res.send({ token });
         })
-        .catch((err) => next(err));
+        .catch(next);
     })
     .catch(next);
 };

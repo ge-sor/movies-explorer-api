@@ -7,12 +7,13 @@ const {
 } = require('../controllers/movies');
 const isUrlCheck = require('../utils/isUrlCheck');
 
-router.get('/',
+router.get('/movies',
   getMovies);
 
-router.post('/',
+router.post('/movies',
   celebrate({
     body: Joi.object().keys({
+      movieId: Joi.number().required(),
       country: Joi.string().required(),
       director: Joi.string().required(),
       duration: Joi.number().required(),
@@ -27,10 +28,10 @@ router.post('/',
   }),
   createMovie);
 
-router.delete('/:movieId',
+router.delete('/movies/:movieId',
   celebrate({
     params: Joi.object().keys({
-      movieId: Joi.string().hex().length(24).required(),
+      movieId: Joi.number().required(),
     }),
   }),
   deleteMovie);
