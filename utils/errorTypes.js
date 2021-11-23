@@ -6,6 +6,7 @@ module.exports.conflictMovieText = 'Фильм с таким id уже суще�
 module.exports.forbiddenDeleteText = 'Недостаточно прав для удаления фильма';
 module.exports.notFoundUserText = 'Пользователь не найден';
 module.exports.notFoundMovieText = 'Фильм не найден';
+module.exports.notFoundPageText = 'Страница не найдена';
 module.exports.serverErrorText = 'Ошибка сервера';
 module.exports.wrongURLText = 'Неправильный формат URL';
 module.exports.wrongEmailText = 'Неправильный формат почты';
