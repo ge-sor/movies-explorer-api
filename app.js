@@ -9,7 +9,7 @@ const router = require('./routes/index');
 const baseError = require('./middlewares/baseError');
 const { limiter } = require('./utils/rateLimit');
 
-const { DB_MOVIES, PORT } = process.env;
+const { DB_MOVIES = 'mongodb://localhost:27017/moviesdb', PORT = 3000 } = process.env;
 
 const app = express();
 app.use(limiter);
