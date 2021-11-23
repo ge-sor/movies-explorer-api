@@ -3,6 +3,12 @@ const BadRequestError = require('../errors/bad-request-err');
 const NotFoundError = require('../errors/not-found-err');
 const ForbiddenError = require('../errors/forbidden-err');
 const ConflictError = require('../errors/conflict-err');
+const {
+  conflictMovieText,
+  badRequestText,
+  notFoundMovieText,
+  forbiddenDeleteText,
+} = require('../utils/errorTypes');
 
 module.exports.getMovies = (req, res, next) => {
   Movie.find({})
@@ -26,7 +32,7 @@ module.exports.createMovie = (req, res, next) => {
   } = req.body;
   Movie.findOne({ movieId }).then((find) => {
     if (find) {
-      throw new ConflictError('Фильм с таким id уже существует');
+      throw new ConflictError(conflictMovieText);
     } else {
       Movie.create({
         movieId,
@@ -44,7 +50,7 @@ module.exports.createMovie = (req, res, next) => {
       })
         .then((movie) => {
           if (!movie) {
-            throw new BadRequestError('Ошибка валидации');
+            throw new BadRequestError(badRequestText);
           }
           res.send({ data: movie });
         })
@@ -56,7 +62,7 @@ module.exports.createMovie = (req, res, next) => {
 module.exports.deleteMovie = (req, res, next) => {
   Movie.findById(req.params.movieId)
     .orFail(() => {
-      throw new NotFoundError('Фильм с указанным _id не найден');
+      throw new NotFoundError(notFoundMovieText);
     })
     .then((movie) => {
       if (req.user._id.toString() === movie.owner.toString()) {
@@ -64,7 +70,7 @@ module.exports.deleteMovie = (req, res, next) => {
           .then(() => res.status(200).send({ message: 'Фильм удален' }))
           .catch(next);
       } else {
-        throw new ForbiddenError('Недостаточно прав для удаления фильма');
+        throw new ForbiddenError(forbiddenDeleteText);
       }
     })
     .catch(next);
