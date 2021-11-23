@@ -29,23 +29,24 @@ module.exports.createUser = (req, res, next) => {
   User.findOne({ email }).then((find) => {
     if (find) {
       throw new ConflictError('Email уже используется');
+    } else {
+      bcrypt.hash(password, 10).then((hash) => User.create({
+        name, email, password: hash,
+      })
+        .then(() => {
+          res.status(200).send({ message: 'Вы успешно зарегистрировались' });
+        })
+        .catch((err) => {
+          if (err.name === 'ValidationError') {
+            throw new BadRequestError('Переданы некорректные данные');
+          }
+          if (err.code === 11000) {
+            throw new ConflictError('Email уже используется');
+          }
+          return next(err);
+        })).catch(next);
     }
   }).catch(next);
-  bcrypt.hash(password, 10).then((hash) => User.create({
-      name, email, password: hash,
-    })
-      .then(() => {
-        res.status(200).send({ message : 'Вы успешно зарегистрировались'})
-      })
-      .catch((err) => {
-        if (err.name === 'ValidationError') {
-          throw new BadRequestError('Переданы некорректные данные');
-        }
-        if (err.code === 11000) {
-          throw new ConflictError('Email уже используется');
-        }
-        return next(err)
-      })).catch(next);
 };
 
 module.exports.updateUser = (req, res, next) => {
@@ -53,27 +54,28 @@ module.exports.updateUser = (req, res, next) => {
   const { name, email } = req.body;
   User.findOne({ email }).then((find) => {
     if (find) {
-      throw new ConflictError('Такой email уже занят' );
+      throw new ConflictError('Такой email уже занят');
+    } else {
+      User.findByIdAndUpdate(
+        userId,
+        { name, email },
+        { new: true, runValidators: true },
+      )
+        .orFail(() => {
+          throw new NotFoundError('Пользователь с указанным id не найден');
+        })
+        .then((user) => {
+          if (!user) {
+            throw new BadRequestError('Ошибка валидации');
+          }
+          res.send({
+            email: user.email,
+            name: user.name,
+          });
+        })
+        .catch(next);
     }
-  }).catch(next)
-  User.findByIdAndUpdate(
-    userId,
-    { name, email },
-    { new: true, runValidators: true },
-  )
-    .orFail(() => {
-      throw new NotFoundError('Пользователь с указанным id не найден');
-    })
-    .then((user) => {
-      if (!user) {
-        throw new BadRequestError('Ошибка валидации');
-      }
-      res.send({
-        email: user.email,
-        name: user.name,
-      });
-    })
-    .catch(next);
+  }).catch(next);
 };
 
 module.exports.login = (req, res, next) => {

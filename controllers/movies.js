@@ -2,6 +2,7 @@ const Movie = require('../models/movie');
 const BadRequestError = require('../errors/bad-request-err');
 const NotFoundError = require('../errors/not-found-err');
 const ForbiddenError = require('../errors/forbidden-err');
+const ConflictError = require('../errors/conflict-err');
 
 module.exports.getMovies = (req, res, next) => {
   Movie.find({})
@@ -23,28 +24,33 @@ module.exports.createMovie = (req, res, next) => {
     nameRU,
     nameEN,
   } = req.body;
-
-  Movie.create({
-    movieId,
-    country,
-    director,
-    duration,
-    year,
-    description,
-    image,
-    trailer,
-    thumbnail,
-    nameRU,
-    nameEN,
-    owner: req.user._id,
-  })
-    .then((movie) => {
-      if (!movie) {
-        throw new BadRequestError('Ошибка валидации');
-      }
-      res.send({ data: movie });
-    })
-    .catch(next);
+  Movie.findOne({ movieId }).then((find) => {
+    if (find) {
+      throw new ConflictError('Фильм с таким id уже существует');
+    } else {
+      Movie.create({
+        movieId,
+        country,
+        director,
+        duration,
+        year,
+        description,
+        image,
+        trailer,
+        thumbnail,
+        nameRU,
+        nameEN,
+        owner: req.user._id,
+      })
+        .then((movie) => {
+          if (!movie) {
+            throw new BadRequestError('Ошибка валидации');
+          }
+          res.send({ data: movie });
+        })
+        .catch(next);
+    }
+  }).catch(next);
 };
 
 module.exports.deleteMovie = (req, res, next) => {
@@ -54,15 +60,12 @@ module.exports.deleteMovie = (req, res, next) => {
     })
     .then((movie) => {
       if (req.user._id.toString() === movie.owner.toString()) {
-        return movie.remove()
+        Movie.deleteOne(movie)
           .then(() => res.status(200).send({ message: 'Фильм удален' }))
-      }
+          .catch(next);
+      } else {
         throw new ForbiddenError('Недостаточно прав для удаления фильма');
-    })
-    .catch((err) => {
-      if (err.kind === 'ObjectId') {
-        next(new BadRequestError('Невалидный id'));
       }
-      next(err)
-    });
+    })
+    .catch(next);
 };

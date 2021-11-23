@@ -6,6 +6,7 @@ const { errors } = require('celebrate');
 const auth = require('./middlewares/auth');
 const NotFoundError = require('./errors/not-found-err');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
+
 const { DB_MOVIES } = process.env;
 const PORT = 3000;
 const app = express();
