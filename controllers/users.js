@@ -23,6 +23,7 @@ module.exports.getUser = (req, res, next) => {
       res.send({
         email: user.email,
         name: user.name,
+        id: user._id,
       });
     })
     .catch(next);
