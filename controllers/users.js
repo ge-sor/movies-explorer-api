@@ -60,7 +60,7 @@ module.exports.updateUser = (req, res, next) => {
   const userId = req.user._id;
   const { name, email } = req.body;
   User.findOne({ email }).then((find) => {
-    if (find) {
+    if (find._id.toString() !== userId) {
       throw new ConflictError(conflictEmailText);
     } else {
       User.findByIdAndUpdate(
