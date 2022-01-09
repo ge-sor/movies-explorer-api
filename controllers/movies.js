@@ -30,8 +30,9 @@ module.exports.createMovie = (req, res, next) => {
     nameRU,
     nameEN,
   } = req.body;
-  Movie.findOne({ movieId }).then((find) => {
-    if (find) {
+  Movie.find({ movieId }).then((find) => {
+    const userId = req.user._id;
+    if (find.find((i) => i.owner.toString() === userId)) {
       throw new ConflictError(conflictMovieText);
     } else {
       Movie.create({
