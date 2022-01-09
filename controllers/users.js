@@ -82,7 +82,26 @@ module.exports.updateUser = (req, res, next) => {
         })
         .catch(next);
     }
-  }).catch(next);
+  }).catch(() => {
+    User.findByIdAndUpdate(
+      userId,
+      { name, email },
+      { new: true, runValidators: true },
+    )
+      .orFail(() => {
+        throw new NotFoundError(notFoundUserText);
+      })
+      .then((user) => {
+        if (!user) {
+          throw new BadRequestError(badRequestText);
+        }
+        res.send({
+          email: user.email,
+          name: user.name,
+        });
+      })
+      .catch(next);
+  });
 };
 
 module.exports.login = (req, res, next) => {
