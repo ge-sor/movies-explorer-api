@@ -23,6 +23,8 @@ const allowedCors = [
   'http://localhost:3001',
   'http://api.gesor-films.nomoredomains.work',
   'https://api.gesor-films.nomoredomains.work',
+  'http://gesor-films.nomoredomains.rocks',
+  'https://gesor-films.nomoredomains.rocks',
 ];
 app.use((req, res, next) => {
   const { origin } = req.headers;
